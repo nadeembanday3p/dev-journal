@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fifa-data-entry
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: app-data
+      mountPath: /data
+      sizeGB: 1

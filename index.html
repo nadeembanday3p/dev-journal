@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FIFA 2026 – Data Entry</title>
+<style>
+:root{--navy:#0D1B2A;--gold:#FFD700;--green:#00843D;--red:#C8102E;--white:#FFFFFF;--card:#132333;--border:#1e3450;--accent:#0057A8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Segoe UI",sans-serif;background:var(--navy);color:var(--white);min-height:100vh;display:flex;flex-direction:column;}
+
+.stars{height:30px;background:linear-gradient(135deg,#0a1628,#0d1f3c);display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;letter-spacing:3px;border-bottom:1px solid var(--border);}
+
+.layout{display:flex;flex:1;}
+.sidebar{width:200px;min-height:100%;background:linear-gradient(180deg,#0f2035,#091522);border-right:2px solid var(--gold);padding:24px 0;display:flex;flex-direction:column;gap:4px;}
+.sidebar h2{color:var(--gold);text-align:center;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;padding:0 12px;}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:12px 20px;cursor:pointer;font-size:14px;color:#a0b8d0;border:none;background:none;width:100%;text-align:left;transition:all .2s;border-left:3px solid transparent;}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,215,0,.08);color:var(--gold);border-left-color:var(--gold);}
+.nav-btn .icon{font-size:16px;width:20px;text-align:center;}
+
+.main{flex:1;padding:32px;overflow-y:auto;max-height:calc(100vh - 58px);}
+
+.page-hdr{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.page-hdr h1{font-size:22px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;}
+.page-hdr .badge{background:var(--gold);color:var(--navy);font-size:11px;font-weight:700;padding:3px 8px;border-radius:12px;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:700px;}
+.form-grid .full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+label{font-size:12px;color:#8aaccc;text-transform:uppercase;letter-spacing:.5px;}
+input,select{padding:10px 14px;background:#0a1a2c;border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:14px;outline:none;transition:border .2s;}
+input:focus,select:focus{border-color:var(--gold);}
+input.autofilled{border-color:#00843D;background:#091e14;}
+select option{background:#0f2035;}
+
+/* Photo + OCR area */
+.photo-ocr-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.photo-box{display:flex;align-items:center;gap:16px;padding:16px;background:#0a1a2c;border:2px dashed var(--border);border-radius:8px;cursor:pointer;transition:border .2s;}
+.photo-box:hover{border-color:var(--gold);}
+.photo-preview{width:86px;height:86px;border-radius:50%;border:2px solid var(--border);background:#091522;display:flex;align-items:center;justify-content:center;font-size:34px;flex-shrink:0;overflow:hidden;}
+.photo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.photo-btn{padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;margin-top:7px;}
+.photo-btn:hover{background:#0069c9;}
+
+/* OCR result panel */
+.ocr-panel{background:#0a1a2c;border:1px solid var(--border);border-radius:8px;padding:14px;display:none;flex-direction:column;gap:10px;}
+.ocr-panel.visible{display:flex;}
+.ocr-panel-title{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gold);font-weight:700;display:flex;align-items:center;gap:8px;}
+.ocr-spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--gold);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ocr-field-row{display:flex;align-items:center;gap:8px;font-size:13px;}
+.ocr-field-label{color:#8aaccc;width:70px;flex-shrink:0;font-size:11px;text-transform:uppercase;}
+.ocr-field-val{flex:1;color:#e0f0ff;font-weight:600;word-break:break-all;}
+.ocr-field-val.empty{color:#5a7a9a;font-style:italic;font-weight:400;}
+.ocr-apply-btn{align-self:flex-start;padding:7px 18px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;}
+.ocr-apply-btn:hover{background:#00a348;}
+.ocr-raw{font-size:11px;color:#5a7a9a;max-height:60px;overflow-y:auto;border-top:1px solid var(--border);padding-top:8px;white-space:pre-wrap;word-break:break-all;}
+
+.btn{padding:11px 28px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.5px;}
+.btn-gold{background:var(--gold);color:var(--navy);}
+.btn-gold:hover{background:#e6c300;}
+.btn:disabled{opacity:.5;cursor:default;}
+.status{margin-top:12px;font-size:13px;padding:10px 14px;border-radius:6px;display:none;}
+.status.ok{display:block;background:rgba(0,132,61,.18);border:1px solid var(--green);color:#4de895;}
+.status.err{display:block;background:rgba(200,16,46,.15);border:1px solid var(--red);color:#ff8099;}
+
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:linear-gradient(90deg,#0d2a4a,#0a1f38);}
+th{padding:12px 14px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;text-align:left;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:#c0d8f0;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,215,0,.04);}
+.del-btn{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:4px;}
+.del-btn:hover{background:rgba(200,16,46,.12);}
+
+.search-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;max-width:500px;}
+.search-bar input{flex:1;}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.card-img{width:100%;height:155px;background:#091522;display:flex;align-items:center;justify-content:center;font-size:60px;overflow:hidden;}
+.card-img img{width:100%;height:155px;object-fit:cover;}
+.card-body{padding:14px;}
+.card-name{font-size:15px;font-weight:700;color:var(--gold);margin-bottom:6px;}
+.card-row{font-size:12px;color:#8aaccc;margin-bottom:3px;}
+.card-row span{color:#d0e8ff;}
+.no-results{color:#8aaccc;font-size:15px;padding:24px 0;}
+
+.host-bar{height:28px;display:flex;align-items:center;justify-content:center;gap:12px;background:linear-gradient(90deg,#BF0A30,#002868 34%,#00843D 67%,#002868 100%);font-size:11px;font-weight:600;letter-spacing:1px;color:#fff;}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(255,215,0,.12);color:var(--gold);border:1px solid rgba(255,215,0,.3);}
+</style>
+</head>
+<body>
+
+<div class="stars">⭐ FIFA WORLD CUP 2026 ⭐ USA · CANADA · MEXICO ⭐</div>
+
+<div class="layout">
+<nav class="sidebar">
+  <h2>⚽ Menu</h2>
+  <button class="nav-btn active" onclick="show('newRecord')"><span class="icon">➕</span>New Record</button>
+  <button class="nav-btn" onclick="show('displayAll')"><span class="icon">📋</span>Display All</button>
+  <button class="nav-btn" onclick="show('search')"><span class="icon">🔍</span>Search</button>
+  <button class="nav-btn" onclick="show('deleteRec')"><span class="icon">🗑️</span>Delete</button>
+  <button class="nav-btn" onclick="show('classes')"><span class="icon">🎓</span>Manage Classes</button>
+</nav>
+
+<div class="main">
+
+<!-- NEW RECORD ──────────────────────────────────────────────────────── -->
+<section id="newRecord">
+  <div class="page-hdr"><h1>New Record</h1><span class="badge">ADD</span></div>
+  <div class="form-grid">
+
+    <!-- Photo upload + OCR panel side by side -->
+    <div class="full photo-ocr-wrap">
+
+      <!-- Left: Photo picker -->
+      <div class="form-group">
+        <label>Student Photo / Document (optional — auto-reads text)</label>
+        <div class="photo-box" onclick="document.getElementById('photoInput').click()">
+          <div class="photo-preview" id="photoPreview"><span>👤</span></div>
+          <div>
+            <div style="font-size:13px;color:#c0d8f0;margin-bottom:4px;">Upload photo or document</div>
+            <div style="font-size:11px;color:#5a7a9a;">App will auto-extract Name, Mobile, Class, Marks</div>
+            <button class="photo-btn" type="button">📂 Browse…</button>
+          </div>
+        </div>
+        <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoSelect(this)"/>
+      </div>
+
+      <!-- Right: OCR result -->
+      <div class="form-group">
+        <label>Auto-Detected Details</label>
+        <div class="ocr-panel" id="ocrPanel">
+          <div class="ocr-panel-title" id="ocrTitle">
+            <span id="ocrSpinner" class="ocr-spinner" style="display:none"></span>
+            <span id="ocrTitleText">Reading image…</span>
+          </div>
+          <div id="ocrFields"></div>
+          <button class="ocr-apply-btn" id="ocrApplyBtn" onclick="applyOcr()" style="display:none">✅ Apply to Form</button>
+          <div class="ocr-raw" id="ocrRaw" style="display:none"></div>
+        </div>
+        <div style="font-size:11px;color:#5a7a9a;margin-top:6px;">
+          Upload an ID card, admit card, or document — detected values will auto-fill below.
+        </div>
+      </div>
+    </div>
+
+    <!-- Form fields -->
+    <div class="form-group">
+      <label>Student Name *</label>
+      <input id="nr-name" placeholder="Full name"/>
+    </div>
+    <div class="form-group">
+      <label>Mobile No *</label>
+      <input id="nr-mobile" placeholder="10-digit mobile" maxlength="10"/>
+    </div>
+    <div class="form-group">
+      <label>Class *</label>
+      <select id="nr-class"><option value="">— Select Class —</option></select>
+    </div>
+    <div class="form-group">
+      <label>Marks (0–100) *</label>
+      <input id="nr-marks" type="number" min="0" max="100" placeholder="e.g. 85"/>
+    </div>
+    <div class="full">
+      <button class="btn btn-gold" id="saveBtn" onclick="saveRecord()">💾 Save Record</button>
+    </div>
+    <div class="full">
+      <div id="nr-status" class="status"></div>
+    </div>
+  </div>
+</section>
+
+<!-- DISPLAY ALL ─────────────────────────────────────────────────────── -->
+<section id="displayAll" style="display:none">
+  <div class="page-hdr"><h1>All Records</h1><span class="badge" id="total-badge">0</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Mobile</th><th>Class</th><th>Marks</th><th>Date</th></tr></thead>
+      <tbody id="all-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SEARCH ──────────────────────────────────────────────────────────── -->
+<section id="search" style="display:none">
+  <div class="page-hdr"><h1>Search Students</h1></div>
+  <div class="search-bar">
+    <input id="search-q" placeholder="Search name, mobile, or class…" oninput="doSearch()"/>
+  </div>
+  <div class="cards" id="cards-container"></div>
+</section>
+
+<!-- DELETE ──────────────────────────────────────────────────────────── -->
+<section id="deleteRec" style="display:none">
+  <div class="page-hdr"><h1>Delete Record</h1><span class="badge" style="background:var(--red);color:#fff">DANGER</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Mobile</th><th>Class</th><th>Marks</th><th>Date</th><th>Del</th></tr></thead>
+      <tbody id="del-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- MANAGE CLASSES ──────────────────────────────────────────────────── -->
+<section id="classes" style="display:none">
+  <div class="page-hdr"><h1>Manage Classes</h1></div>
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;max-width:420px;">
+    <input id="cls-input" placeholder="New class name" onkeydown="if(event.key==='Enter')addClass()"/>
+    <button class="btn btn-gold" onclick="addClass()">➕ Add</button>
+  </div>
+  <div id="cls-status" class="status" style="max-width:420px;margin-bottom:16px;"></div>
+  <div class="table-wrap" style="max-width:420px;">
+    <table>
+      <thead><tr><th>Class Name</th><th>Remove</th></tr></thead>
+      <tbody id="cls-body"></tbody>
+    </table>
+  </div>
+</section>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+<div class="host-bar">🇺🇸 USA &nbsp;|&nbsp; 🇨🇦 CANADA &nbsp;|&nbsp; 🇲🇽 MEXICO</div>
+
+<script>
+// ── Navigation ───────────────────────────────────────────────────────────────
+const PAGES=['newRecord','displayAll','search','deleteRec','classes'];
+function show(id){
+  PAGES.forEach(p=>document.getElementById(p).style.display=p===id?'block':'none');
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',PAGES[i]===id));
+  if(id==='displayAll')loadRecords();
+  if(id==='search'){loadForSearch();document.getElementById('search-q').value='';renderCards([]);}
+  if(id==='deleteRec')loadDeleteRecords();
+  if(id==='classes')loadClassTable();
+}
+
+// ── Photo select: crop face first, then OCR ──────────────────────────────────
+let ocrData = null;
+let cropToken = null;   // token of server-side cropped temp file
+
+async function handlePhotoSelect(input){
+  const prev = document.getElementById('photoPreview');
+  if(!input.files || !input.files[0]){
+    prev.innerHTML = '<span>👤</span>';
+    hideOcrPanel(); cropToken = null; return;
+  }
+
+  const file = input.files[0];
+
+  // Show original preview immediately so user sees something
+  prev.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="preview"/>`;
+
+  // Show OCR panel in scanning state
+  showOcrScanning('Detecting face and cropping…');
+
+  // ── Step 1: crop face ────────────────────────────────────────────────
+  cropToken = null;
+  try {
+    const fd = new FormData();
+    fd.append('image', file);
+    const cr = await fetch('/api/crop', {method:'POST', body:fd});
+    const cd = await cr.json();
+
+    if(cd.found && cd.preview){
+      // Replace preview with cropped face portrait
+      prev.innerHTML = `<img src="${cd.preview}" alt="cropped face"/>`;
+      cropToken = cd.token;
+      showOcrScanning('✂️ Face cropped — reading text from card…');
+    } else {
+      // No face found — show original image, warn user
+      if(cd.preview) prev.innerHTML = `<img src="${cd.preview}" alt="original"/>`;
+      showOcrScanning('⚠️ ' + (cd.message || 'No face detected') + ' Reading text…');
+    }
+  } catch(e) {
+    showOcrScanning('Crop error — reading text…');
+  }
+
+  // ── Step 2: OCR the original full ID card for text ───────────────────
+  await runOCR(file);
+}
+
+function hideOcrPanel(){
+  document.getElementById('ocrPanel').classList.remove('visible');
+  ocrData = null; cropToken = null;
+}
+
+function showOcrScanning(msg){
+  const panel   = document.getElementById('ocrPanel');
+  const spinner = document.getElementById('ocrSpinner');
+  const title   = document.getElementById('ocrTitleText');
+  const fields  = document.getElementById('ocrFields');
+  const applyBtn= document.getElementById('ocrApplyBtn');
+  panel.classList.add('visible');
+  spinner.style.display = 'inline-block';
+  title.textContent = msg;
+  fields.innerHTML  = '';
+  applyBtn.style.display = 'none';
+}
+
+async function runOCR(file){
+  const panel   = document.getElementById('ocrPanel');
+  const spinner = document.getElementById('ocrSpinner');
+  const title   = document.getElementById('ocrTitleText');
+  const fields  = document.getElementById('ocrFields');
+  const applyBtn= document.getElementById('ocrApplyBtn');
+  const rawDiv  = document.getElementById('ocrRaw');
+
+  panel.classList.add('visible');
+  spinner.style.display = 'inline-block';
+  title.textContent = 'Reading image with OCR…';
+  fields.innerHTML  = '';
+  applyBtn.style.display = 'none';
+  rawDiv.style.display   = 'none';
+  ocrData = null;
+
+  const fd = new FormData();
+  fd.append('image', file);
+
+  try{
+    const r = await fetch('/api/ocr', {method:'POST', body:fd});
+    const d = await r.json();
+    if(d.error){
+      spinner.style.display='none';
+      title.textContent='⚠️ OCR failed: '+d.error;
+      return;
+    }
+    ocrData = d.fields;
+    spinner.style.display = 'none';
+    title.textContent = '🔍 Detected from image:';
+
+    const labels = {name:'Name', mobile:'Mobile', cls:'Class', marks:'Marks'};
+    let anyFound = false;
+    fields.innerHTML = '';
+    for(const [key, label] of Object.entries(labels)){
+      const val = ocrData[key];
+      const row = document.createElement('div');
+      row.className = 'ocr-field-row';
+      if(val){
+        anyFound = true;
+        row.innerHTML = `<span class="ocr-field-label">${label}</span><span class="ocr-field-val">${esc(val)}</span>`;
+      } else {
+        row.innerHTML = `<span class="ocr-field-label">${label}</span><span class="ocr-field-val empty">not detected</span>`;
+      }
+      fields.appendChild(row);
+    }
+
+    if(anyFound){
+      applyBtn.style.display = 'inline-block';
+    } else {
+      title.textContent = '⚠️ No details detected — fill in manually';
+    }
+
+    // Show raw text (collapsed)
+    if(d.raw){
+      rawDiv.style.display = 'block';
+      rawDiv.textContent   = 'Raw OCR: ' + d.raw;
+    }
+
+  }catch(e){
+    spinner.style.display = 'none';
+    title.textContent = '⚠️ OCR error: ' + e.message;
+  }
+}
+
+function applyOcr(){
+  if(!ocrData) return;
+  const highlight = el => { el.classList.add('autofilled'); setTimeout(()=>el.classList.remove('autofilled'),3000); };
+
+  if(ocrData.name){
+    const el = document.getElementById('nr-name');
+    el.value = ocrData.name; highlight(el);
+  }
+  if(ocrData.mobile){
+    const el = document.getElementById('nr-mobile');
+    el.value = ocrData.mobile; highlight(el);
+  }
+  if(ocrData.marks){
+    const el = document.getElementById('nr-marks');
+    el.value = ocrData.marks; highlight(el);
+  }
+  if(ocrData.cls){
+    const sel = document.getElementById('nr-class');
+    // Try exact match first, then partial
+    let matched = false;
+    for(const opt of sel.options){
+      if(opt.value === ocrData.cls){ opt.selected=true; matched=true; break; }
+    }
+    if(!matched){
+      const low = ocrData.cls.toLowerCase();
+      for(const opt of sel.options){
+        if(opt.value.toLowerCase().includes(low)||low.includes(opt.value.toLowerCase())){
+          opt.selected=true; matched=true; break;
+        }
+      }
+    }
+    if(matched) highlight(sel);
+  }
+
+  document.getElementById('ocrApplyBtn').textContent = '✅ Applied!';
+  setTimeout(()=>{document.getElementById('ocrApplyBtn').textContent='✅ Apply to Form';},2000);
+}
+
+// ── Classes ───────────────────────────────────────────────────────────────────
+async function fetchClasses(){
+  try{
+    const r = await fetch('/api/classes');
+    const list = await r.json();
+    const sel = document.getElementById('nr-class');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Select Class —</option>';
+    list.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c; o.textContent=c;
+      if(c===cur) o.selected=true;
+      sel.appendChild(o);
+    });
+    return list;
+  }catch(e){return[];}
+}
+fetchClasses();
+
+async function loadClassTable(){
+  const list = await fetchClasses();
+  const tb = document.getElementById('cls-body');
+  tb.innerHTML = '';
+  if(!list.length){tb.innerHTML='<tr><td colspan="2" style="text-align:center;color:#8aaccc">No classes yet</td></tr>';return;}
+  list.forEach(c=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(c)}</td><td><button class="del-btn" onclick="deleteClass('${c.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">✖</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function showClsStatus(msg,ok){
+  const s=document.getElementById('cls-status');
+  s.className='status '+(ok?'ok':'err'); s.textContent=msg;
+  setTimeout(()=>{s.className='status';},3000);
+}
+async function addClass(){
+  const inp=document.getElementById('cls-input');
+  const name=inp.value.trim();
+  if(!name){showClsStatus('Enter a class name',false);return;}
+  const r=await fetch('/api/classes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+  const d=await r.json();
+  if(d.ok){inp.value='';showClsStatus(`"${name}" added`,true);loadClassTable();}
+  else showClsStatus(d.error,false);
+}
+async function deleteClass(name){
+  if(!confirm(`Remove class "${name}"?`))return;
+  const r=await fetch(`/api/classes/${encodeURIComponent(name)}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok){showClsStatus(`"${name}" removed`,true);loadClassTable();}
+  else showClsStatus(d.error,false);
+}
+
+// ── Save Record ───────────────────────────────────────────────────────────────
+async function saveRecord(){
+  const btn=document.getElementById('saveBtn');
+  const st=document.getElementById('nr-status');
+  function showSt(msg,type){st.className='status '+type;st.textContent=msg;}
+
+  const name   = document.getElementById('nr-name').value.trim();
+  const mobile = document.getElementById('nr-mobile').value.trim();
+  const cls    = document.getElementById('nr-class').value;
+  const marks  = document.getElementById('nr-marks').value.trim();
+  const photo  = document.getElementById('photoInput').files[0];
+
+  if(!name)  {showSt('Name is required','err');return;}
+  if(!mobile){showSt('Mobile is required','err');return;}
+  if(!/^\d{10}$/.test(mobile)){showSt('Mobile must be exactly 10 digits','err');return;}
+  if(!cls)   {showSt('Please select a class','err');return;}
+  if(marks===''||isNaN(+marks)||+marks<0||+marks>100){showSt('Marks must be 0–100','err');return;}
+
+  btn.disabled=true; btn.textContent='⏳ Saving…';
+  const fd=new FormData();
+  fd.append('name',name); fd.append('mobile',mobile);
+  fd.append('cls',cls);   fd.append('marks',marks);
+  if(cropToken) fd.append('crop_token', cropToken);
+  else if(photo) fd.append('image',photo);
+
+  try{
+    const r=await fetch('/api/records',{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.ok){
+      document.getElementById('nr-name').value='';
+      document.getElementById('nr-mobile').value='';
+      document.getElementById('nr-class').value='';
+      document.getElementById('nr-marks').value='';
+      document.getElementById('photoInput').value='';
+      document.getElementById('photoPreview').innerHTML='<span>👤</span>';
+      cropToken = null;
+      hideOcrPanel();
+      showSt(`✅ Record #${d.serial} saved successfully!`,'ok');
+    }else showSt(d.error||'Save failed','err');
+  }catch(e){showSt('Network error: '+e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='💾 Save Record';}
+}
+
+// ── Display All ───────────────────────────────────────────────────────────────
+async function loadRecords(){
+  const tb=document.getElementById('all-body');
+  tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8aaccc;padding:20px">Loading…</td></tr>';
+  const r=await fetch('/api/records');
+  const list=await r.json();
+  document.getElementById('total-badge').textContent=list.length;
+  tb.innerHTML='';
+  if(!list.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#8aaccc;padding:20px">No records found</td></tr>';return;}
+  list.forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${s.sr}</td><td>${esc(s.name)}</td><td>${esc(s.mobile)}</td><td><span class="pill">${esc(s.cls||'')}</span></td><td>${s.marks??''}</td><td style="font-size:12px;color:#8aaccc">${esc(s.date||'')}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── Search / Cards ────────────────────────────────────────────────────────────
+let allRecords=[];
+async function loadForSearch(){
+  const r=await fetch('/api/records');
+  allRecords=await r.json();
+  renderCards(allRecords);
+}
+function doSearch(){
+  const q=document.getElementById('search-q').value.toLowerCase().trim();
+  if(!q){renderCards(allRecords);return;}
+  renderCards(allRecords.filter(s=>
+    (s.name||'').toLowerCase().includes(q)||
+    (s.mobile||'').includes(q)||
+    (s.cls||'').toLowerCase().includes(q)
+  ));
+}
+function renderCards(list){
+  const box=document.getElementById('cards-container');
+  if(!list.length){box.innerHTML='<p class="no-results">No matching students found.</p>';return;}
+  box.innerHTML='';
+  list.forEach(s=>{
+    const card=document.createElement('div');
+    card.className='card';
+    const imgHtml=s.image
+      ? `<img src="/uploads/${encodeURIComponent(s.image)}" alt="${esc(s.name)}" onerror="this.parentNode.innerHTML='<div style=\\'font-size:60px;line-height:155px;text-align:center\\'>👤</div>'">`
+      : '👤';
+    card.innerHTML=`
+      <div class="card-img">${imgHtml}</div>
+      <div class="card-body">
+        <div class="card-name">${esc(s.name||'—')}</div>
+        <div class="card-row">📱&nbsp;<span>${esc(s.mobile||'—')}</span></div>
+        <div class="card-row">🎓&nbsp;<span class="pill">${esc(s.cls||'—')}</span></div>
+        <div class="card-row">📊 Marks:&nbsp;<span>${s.marks??'—'}</span></div>
+        <div class="card-row" style="margin-top:6px;font-size:11px;color:#5a7a9a">${esc(s.date||'')}</div>
+      </div>`;
+    box.appendChild(card);
+  });
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function loadDeleteRecords(){
+  const tb=document.getElementById('del-body');
+  tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8aaccc;padding:20px">Loading…</td></tr>';
+  const r=await fetch('/api/records');
+  const list=await r.json();
+  tb.innerHTML='';
+  if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#8aaccc;padding:20px">No records found</td></tr>';return;}
+  list.forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${s.sr}</td><td>${esc(s.name)}</td><td>${esc(s.mobile)}</td><td><span class="pill">${esc(s.cls||'')}</span></td><td>${s.marks??''}</td><td style="font-size:12px;color:#8aaccc">${esc(s.date||'')}</td>
+      <td><button class="del-btn" onclick="deleteRecord(${s.sr},'${(s.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">✖</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+async function deleteRecord(sr,name){
+  if(!confirm(`Delete record #${sr} — ${name}?`))return;
+  const r=await fetch(`/api/records/${sr}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok)loadDeleteRecords();
+  else alert('Delete failed: '+(d.error||'unknown'));
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

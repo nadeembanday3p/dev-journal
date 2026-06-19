@@ -9,9 +9,18 @@ import cv2
 import numpy as np
 from PIL import Image
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Users\mm0225\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+# Auto-detect Tesseract: Linux/cloud uses system binary; Windows uses local install
+import shutil as _shutil
+_tess_system = _shutil.which("tesseract")
+if _tess_system:
+    pytesseract.pytesseract.tesseract_cmd = _tess_system
+else:
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Users\mm0225\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__,
+            template_folder=os.path.join(BASE_DIR, "templates"),
+            static_folder=os.path.join(BASE_DIR, "static"))
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024   # 5 MB max upload
 
 # Always return JSON errors instead of HTML error pages
@@ -30,9 +39,10 @@ def handle_404(e): return jsonify({"error": "Not found"}), 404
 @app.errorhandler(413)
 def handle_413(e): return jsonify({"error": "File too large (max 5 MB)"}), 413
 
-BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-EXCEL_FILE  = os.path.join(BASE_DIR, "..", "Data_Entry_Form.xlsx")
-UPLOADS_DIR = os.path.join(BASE_DIR, "static", "uploads")
+# DATA_DIR env var lets cloud hosts point to a persistent volume (e.g. /data)
+DATA_DIR    = os.environ.get("DATA_DIR", BASE_DIR)
+EXCEL_FILE  = os.path.join(DATA_DIR, "Data_Entry_Form.xlsx")
+UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
 ALLOWED_EXT = {"png","jpg","jpeg","gif","webp"}
 
 os.makedirs(UPLOADS_DIR, exist_ok=True)
