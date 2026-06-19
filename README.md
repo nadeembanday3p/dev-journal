@@ -1,0 +1,7 @@
+Flask==3.0.3
+Werkzeug==3.1.8
+openpyxl==3.1.5
+Pillow==12.2.0
+pytesseract==0.3.13
+opencv-python-headless==4.13.0.92
+numpy==2.4.6
